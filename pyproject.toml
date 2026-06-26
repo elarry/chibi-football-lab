@@ -1,0 +1,11 @@
+[project]
+name = "chibi-football-lab"
+version = "0.1.0"
+description = "Train and simulate AI football agents"
+readme = "README.md"
+requires-python = ">=3.10.1,<=3.10.12"
+dependencies = []
+
+
+
+

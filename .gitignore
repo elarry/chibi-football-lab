@@ -25,36 +25,15 @@ pip-log.txt
 # ML-Agents / training artifacts
 results/
 summaries/
-*.onnx
 *.pt
 *.pth
 *.nn
-
-# Models directory (large binary files)
-models/
-
-# Unity
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-[Uu]ser[Ss]ettings/
-*.pidb
-*.suo
-*.user
-*.userprefs
-*.unityproj
-*.booproj
-sysinfo.txt
-*.apk
-*.aab
-*.unitypackage
-crashlytics-build.properties
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Local external repos
+external/
