@@ -1,11 +1,10 @@
 """
 Run inference through the ML-Agents Python API with two ONNXRuntime policies.
 
-Usage (macOS — drop the .app extension):
-    python mlagents_inference.py \
-        --env ./Builds/football-inference \
-        --left models/teamLeft.onnx \
-        --right models/teamRight.onnx
+python mlagents_inference.py \
+    --env ./Builds/football-inference \
+    --left models/teamLeft.onnx \
+    --right models/teamRight.onnx
 """
 
 from __future__ import annotations
@@ -27,6 +26,7 @@ from inference_utils import create_unity_environment, suppress_native_output
 
 @dataclass
 class OnnxPolicy:
+    """Wraps an ONNX inference session for a single ML-Agents policy."""
     session: ort.InferenceSession
     input_names: set[str]
     output_names: list[str]
@@ -34,6 +34,7 @@ class OnnxPolicy:
 
     @classmethod
     def load(cls, path: str | Path) -> OnnxPolicy:
+        """Load a policy from an ONNX file and inspect its inputs/outputs."""
         session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
         input_names = {i.name for i in session.get_inputs()}
         output_names = [o.name for o in session.get_outputs()]
@@ -45,6 +46,7 @@ class OnnxPolicy:
         return cls(session, input_names, output_names, mask_size)
 
     def act(self, decision_steps: DecisionSteps) -> ActionTuple:
+        """Run inference on the current decision steps and return actions."""
         n_agents = len(decision_steps)
         feed: dict[str, np.ndarray] = {}
 
@@ -86,6 +88,8 @@ class Team(str, Enum):
 
 @dataclass(frozen=True)
 class BehaviorRunner:
+    """Pairs a Unity behavior name with its team and the policy that controls it."""
+
     behavior_name: str
     team: Team
     policy: OnnxPolicy
@@ -93,6 +97,8 @@ class BehaviorRunner:
 
 @dataclass(frozen=True)
 class TerminalEvent:
+    """Snapshot of one agent's terminal step, including score and outcome label."""
+
     team: Team
     agent_id: int
     reward: float
@@ -114,6 +120,8 @@ class TerminalEvent:
 
 
 class ScoreTracker:
+    """Tracks goals and per-agent cumulative rewards across episodes."""
+
     def __init__(self) -> None:
         self.episode = 0
         self.goals = {Team.LEFT: 0, Team.RIGHT: 0}
@@ -126,6 +134,7 @@ class ScoreTracker:
         behavior_name: str,
         decision_steps: DecisionSteps,
     ) -> None:
+        """Accumulate step rewards for agents that are still active."""
         for agent_id, reward, group_reward in zip(
             decision_steps.agent_id,
             decision_steps.reward,
@@ -140,6 +149,7 @@ class ScoreTracker:
         terminal_steps: TerminalSteps,
         team: Team,
     ) -> list[TerminalEvent]:
+        """Finalize rewards for terminated agents and return one event per agent."""
         events: list[TerminalEvent] = []
         for agent_id, reward, group_reward, interrupted in zip(
             terminal_steps.agent_id,
@@ -215,6 +225,7 @@ class ScoreTracker:
 
 
 def find_behavior(behavior_names: list[str], keyword: str) -> str:
+    """Return the first behavior name that contains keyword (case-insensitive)."""
     match = [b for b in behavior_names if keyword.lower() in b.lower()]
     if not match:
         raise ValueError(
@@ -229,6 +240,7 @@ def build_runners(
     left_policy: OnnxPolicy,
     right_policy: OnnxPolicy,
 ) -> list[BehaviorRunner]:
+    """Match left/right behavior names from the env and pair them with their policies."""
     left_behavior = find_behavior(behavior_names, Team.LEFT.value)
     right_behavior = find_behavior(behavior_names, Team.RIGHT.value)
 
@@ -239,6 +251,7 @@ def build_runners(
 
 
 def get_group_rewards(steps: DecisionSteps | TerminalSteps) -> np.ndarray:
+    """Return group_reward array, falling back to zeros if the field is absent."""
     group_rewards = getattr(steps, "group_reward", None)
     if group_rewards is None:
         return np.zeros(len(steps), dtype=np.float32)
@@ -249,11 +262,12 @@ def simulate_match(
     env_path: str | Path,
     left_model_path: str | Path,
     right_model_path: str | Path,
-    no_graphics: bool,
-    time_scale: float,
-    verbose: bool,
+    time_scale: float = 1.0,
+    verbose: bool = False,
+    no_graphics: bool = False,
     show_unity_output: bool = False,
 ) -> None:
+    """Run the Unity environment with two ONNX policies until KeyboardInterrupt."""
     left_policy = OnnxPolicy.load(left_model_path)
     right_policy = OnnxPolicy.load(right_model_path)
 
@@ -309,6 +323,9 @@ def simulate_match(
         print(f"\nStopped. Final score: {tracker.final_score()}")
     finally:
         env.close()
+        
+    return tracker
+
 
 
 def parse_args() -> argparse.Namespace:

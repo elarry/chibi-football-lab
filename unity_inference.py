@@ -9,7 +9,6 @@ import re
 import shutil
 import subprocess
 import time
-import warnings
 from pathlib import Path
 
 from inference_utils import create_unity_environment, suppress_native_output
@@ -27,7 +26,28 @@ class InferenceResult:
     log_text: str | None = None
 
 
+def resolve_unity_executable(env_path: str | Path) -> Path:
+    """Resolve a Unity executable path, accepting either the .app bundle or the inner binary.
 
+    On macOS, Unity builds the executable at <App>.app/Contents/MacOS/<name>.
+    Passing the .app directory is enough; this function finds the binary inside it.
+    """
+    p = Path(env_path).expanduser().resolve()
+    if p.is_file():
+        return p
+    if not p.suffix == ".app" and (p.with_suffix(".app")).is_dir():
+        p = p.with_suffix(".app")
+    macos_dir = p / "Contents" / "MacOS"
+    if macos_dir.is_dir():
+        candidates = [f for f in macos_dir.iterdir() if f.is_file()]
+        if len(candidates) == 1:
+            return candidates[0]
+        if candidates:
+            raise ValueError(
+                f"Multiple executables in {macos_dir}: {[c.name for c in candidates]}. "
+                "Pass the full path to select one."
+            )
+    raise FileNotFoundError(f"No executable found at {p}")
 
 
 def _prepare_model_dir(
@@ -65,7 +85,7 @@ def discover_behavior_names(
             "Run this from an ML-Agents Python environment."
         ) from exc
 
-    env_executable = Path(env_path).expanduser().resolve()
+    env_executable = resolve_unity_executable(env_path)
     channel = EngineConfigurationChannel()
     channel.set_configuration_parameters(time_scale=20.0)
     output_context = (
@@ -143,7 +163,7 @@ def _create_video(input_files: str | Path, output_file: str | Path) -> None:
         output_file,
     ]
 
-    subprocess.run([str(part) for part in cmd], check=True)
+    subprocess.run([str(part) for part in cmd], check=True, capture_output=True)
 
 
 def _parse_model_arg(model_arg: str) -> tuple[str, Path]:
@@ -172,7 +192,7 @@ def simulate_match(
     timeout_limit: int = 60,  # seconds
     headless: bool = False,
     save_video: bool = False,
-    keep_artifacts: bool = True,
+    keep_artifacts: bool = False,
     include_log_text: bool = False,
     print_behaviors_on_load_failure: bool = True,
 ) -> InferenceResult:
@@ -204,9 +224,7 @@ def simulate_match(
             discovery is unavailable, print a warning and continue.
     """
     root = Path.cwd()
-    env_executable = Path(env_path).expanduser().resolve()
-    if not env_executable.is_file():
-        raise FileNotFoundError(env_executable)
+    env_executable = resolve_unity_executable(env_path)
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     result_match_dir = Path(results_dir).expanduser().resolve() / timestamp

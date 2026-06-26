@@ -37,3 +37,9 @@ summaries/
 
 # Local external repos
 external/
+
+# Binaries
+envs/*
+
+# Dev files
+dev/

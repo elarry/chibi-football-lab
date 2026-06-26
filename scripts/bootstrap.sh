@@ -10,3 +10,4 @@ source .venv/bin/activate
 git clone --depth 1 https://github.com/Unity-Technologies/ml-agents.git external/ml-agents
 python -m pip install -e external/ml-agents/ml-agents-envs
 python -m pip install -e external/ml-agents/ml-agents
+python -m pip install ipykernel onnxruntime

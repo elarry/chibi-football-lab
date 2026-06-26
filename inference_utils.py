@@ -80,3 +80,14 @@ def create_unity_environment(
 
     with suppress_native_output():
         return UnityEnvironment(**kwargs)
+
+def print_score(result):
+    """Print the score from an inference result."""
+    if result.score is None:
+        final_score = (0,0)
+    else: 
+        final_score = result.score
+    
+    print(f"Final Score: {final_score[0]} -- {final_score[1]}!")
+    
+    return
