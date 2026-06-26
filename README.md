@@ -3,7 +3,7 @@
 Showcase of using Multi-Agent Reinforcement Learning (MARL) to train AI football players in a custom Unity environment using Unity's [ML-Agents Toolkit](https://github.com/Unity-Technologies/ml-agents).
 
 
-![Chibi Football Lab](docs/chibi-lab.gif)
+![Chibi Football Lab](docs/chibi-gameplay.gif)
 
 **Related Projects:**
 - [Chibi Football Arena](https://github.com/elarry/chibi-football-arena): Unity environment for training and simulating AI controlled football players.
