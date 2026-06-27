@@ -21,6 +21,11 @@ scripts/    — shell scripts for setup
 
 ## Setup
 
+The simulation requires the Unity Chibi Football Arena environment. You have two possibilities:
+1. Build [Chibi Football Arena](https://github.com/elarry/chibi-football-arena) with Unity from source files.
+1. Download the pre-built environment from [releases](https://github.com/elarry/chibi-football-arena/releases). 
+
+
 Run the bootstrap script to install all dependencies into a virtual environment:
 
 ```bash
